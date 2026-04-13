@@ -15,6 +15,8 @@ type ProvidersProps = {
 
 export default function Providers({ children }: ProvidersProps) {
   const queryClient = useMemo(() => new QueryClient(), []);
+  const amoyRpcUrl = process.env.NEXT_PUBLIC_AMOY_RPC_URL;
+  const mumbaiRpcUrl = process.env.NEXT_PUBLIC_MUMBAI_RPC_URL;
 
   const config = useMemo(
     () =>
@@ -23,12 +25,12 @@ export default function Providers({ children }: ProvidersProps) {
         projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "demo-project-id",
         chains: [polygonAmoy, polygonMumbai],
         transports: {
-          [polygonAmoy.id]: http(),
-          [polygonMumbai.id]: http(),
+          [polygonAmoy.id]: http(amoyRpcUrl, { retryCount: 5, retryDelay: 1_000, timeout: 15_000 }),
+          [polygonMumbai.id]: http(mumbaiRpcUrl, { retryCount: 5, retryDelay: 1_000, timeout: 15_000 }),
         },
         ssr: true,
       }),
-    [],
+    [amoyRpcUrl, mumbaiRpcUrl],
   );
 
   return (

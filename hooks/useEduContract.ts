@@ -17,7 +17,7 @@ const GAS_BUFFER_NUMERATOR = 12n;
 const GAS_BUFFER_DENOMINATOR = 10n;
 const MIN_TX_GAS = 21_000n;
 const MIN_PRIORITY_FEE_WEI = 25_000_000_000n;
-const FALLBACK_MAX_FEE_WEI = 60_000_000_000n;
+const FALLBACK_MAX_FEE_WEI = 45_000_000_000n;
 
 const FALLBACK_GAS_LIMITS = {
   uploadContent: 700_000n,
@@ -138,6 +138,13 @@ function useWriteAction() {
         return hash;
       } catch (error) {
         const normalized = error instanceof Error ? error : new Error("Transaction failed.");
+        if (/rate limit|rate-limited|too many requests|429/i.test(normalized.message)) {
+          const retryMessage =
+            "RPC is rate-limiting requests. Wait 20-30 seconds and retry. For stable writes, use a dedicated Amoy RPC URL in NEXT_PUBLIC_AMOY_RPC_URL.";
+          const wrapped = new Error(retryMessage);
+          setLocalError(wrapped);
+          throw wrapped;
+        }
         setLocalError(normalized);
         throw normalized;
       } finally {

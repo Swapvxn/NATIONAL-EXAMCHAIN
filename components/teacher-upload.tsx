@@ -535,7 +535,7 @@ export default function TeacherUpload() {
               <p className="font-bold text-cyan-300">Content ID Assigned</p>
             </div>
             <p className="mb-3 text-xs text-zinc-300">Use this ID to grant access to examination centres</p>
-            <code className="inline-block rounded-lg border border-cyan-500/30 bg-black/40 px-3 py-2 font-mono text-sm font-bold text-cyan-200">
+            <code className="block w-full max-w-full break-all whitespace-normal rounded-lg border border-cyan-500/30 bg-black/40 px-3 py-2 font-mono text-sm font-bold leading-relaxed text-cyan-200">
               #{uploadedContentId}
             </code>
           </motion.div>
@@ -557,13 +557,13 @@ export default function TeacherUpload() {
                   : "border-cyan-500/40 bg-cyan-950/30 text-cyan-200"
             }`}
           >
-            <div className="flex items-center gap-2 text-xs font-semibold">
+            <div className="flex items-start gap-2 text-xs font-semibold break-words">
               {uploadTxLoading && <LoaderCircle className="h-4 w-4 animate-spin" />}
               {uploadTxSuccess && <CheckCircle2 className="h-4 w-4" />}
               {uploadTxError && <FileLock2 className="h-4 w-4" />}
               {uploadTxLoading && "Confirming on-chain..."}
               {uploadTxSuccess && "Upload confirmed on Polygon"}
-              {uploadTxError && uploadTxError.message}
+              {uploadTxError && <span className="whitespace-pre-wrap break-all">{uploadTxError.message}</span>}
             </div>
             {uploadTxHash && <p className="mt-2 break-all font-mono text-xs opacity-70">Tx: {uploadTxHash}</p>}
           </motion.div>
@@ -621,11 +621,11 @@ export default function TeacherUpload() {
                   : mintTxError
                     ? "border-red-500/40 bg-red-950/30 text-red-200"
                     : "border-purple-500/40 bg-purple-950/30 text-purple-200"
-              }`}
+              } break-words`}
             >
               {mintTxLoading && "Submitting access NFT..."}
               {mintTxSuccess && "✓ Access granted to centre"}
-              {mintTxError && mintTxError.message}
+              {mintTxError && <p className="whitespace-pre-wrap break-all">{mintTxError.message}</p>}
               {mintTxHash && <p className="mt-1 break-all font-mono text-xs opacity-70">Tx: {mintTxHash}</p>}
             </div>
           )}
