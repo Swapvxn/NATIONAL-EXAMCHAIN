@@ -204,6 +204,13 @@ export default function StudentVault() {
     void loadStoredPapers();
   }, [loadHistoryRecords, loadStoredPapers]);
 
+  useEffect(() => {
+    if (!address) return;
+    void refresh();
+    void loadHistoryRecords();
+    void loadStoredPapers();
+  }, [address, loadHistoryRecords, loadStoredPapers, refresh]);
+
   const persistAccessRecord = async (payload: {
     contentId: string;
     ipfsCid: string;

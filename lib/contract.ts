@@ -85,6 +85,30 @@ export const abi = [
     outputs: [{ name: "", type: "bool" }],
   },
   {
+    type: "function",
+    name: "ADMIN_ROLE",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bytes32" }],
+  },
+  {
+    type: "function",
+    name: "EXAM_CENTER_ROLE",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bytes32" }],
+  },
+  {
+    type: "function",
+    name: "hasRole",
+    stateMutability: "view",
+    inputs: [
+      { name: "role", type: "bytes32" },
+      { name: "account", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
     type: "event",
     name: "ContentUploaded",
     inputs: [

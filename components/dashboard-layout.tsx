@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { ArrowLeft, Activity, BarChart3, Database, Lock, Shield, Zap } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useAccount, usePublicClient, useWatchBlockNumber } from "wagmi";
+import { abi, contractAddress } from "@/lib/contract";
 
 type DashboardLayoutProps = {
   adminPanel: ReactNode;
@@ -12,9 +14,87 @@ type DashboardLayoutProps = {
 };
 
 export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLayoutProps) {
+  const { address } = useAccount();
+  const publicClient = usePublicClient();
   const [activePanel, setActivePanel] = useState<"admin" | "centre">("admin");
+  const [role, setRole] = useState<"unknown" | "admin" | "centre" | "none">("unknown");
   const adminPanelRef = useRef<HTMLDivElement>(null);
   const centrePanelRef = useRef<HTMLDivElement>(null);
+
+  const resolveRole = useCallback(async () => {
+    if (!publicClient || !address || contractAddress === "0x0000000000000000000000000000000000000000") {
+      setRole("unknown");
+      return;
+    }
+
+    try {
+      const adminRole = (await publicClient.readContract({
+        address: contractAddress,
+        abi,
+        functionName: "ADMIN_ROLE",
+      } as any)) as `0x${string}`;
+
+      const examCenterRole = (await publicClient.readContract({
+        address: contractAddress,
+        abi,
+        functionName: "EXAM_CENTER_ROLE",
+      } as any)) as `0x${string}`;
+
+      const [isAdmin, isExamCenter] = (await Promise.all([
+        publicClient.readContract({
+          address: contractAddress,
+          abi,
+          functionName: "hasRole",
+          args: [adminRole, address],
+        } as any),
+        publicClient.readContract({
+          address: contractAddress,
+          abi,
+          functionName: "hasRole",
+          args: [examCenterRole, address],
+        } as any),
+      ])) as [boolean, boolean];
+
+      if (isAdmin) {
+        setRole("admin");
+      } else if (isExamCenter) {
+        setRole("centre");
+      } else {
+        setRole("none");
+      }
+    } catch {
+      setRole("unknown");
+    }
+  }, [address, publicClient]);
+
+  useEffect(() => {
+    if (!address) {
+      setRole("unknown");
+      return;
+    }
+    void resolveRole();
+  }, [address, resolveRole]);
+
+  useWatchBlockNumber({
+    enabled: Boolean(address && publicClient),
+    onBlockNumber: () => {
+      void resolveRole();
+    },
+  });
+
+  const canViewAdmin = !address || role === "admin";
+  const canViewCentre = !address || role === "admin" || role === "centre";
+
+  useEffect(() => {
+    if (!address) return;
+    if (role === "centre") {
+      setActivePanel("centre");
+      return;
+    }
+    if (role === "admin") {
+      setActivePanel("admin");
+    }
+  }, [address, role]);
 
   const focusPanel = (panel: "admin" | "centre") => {
     setActivePanel(panel);
@@ -57,6 +137,7 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
 
           {/* Navigation */}
           <nav className="mb-8 grid gap-3 text-sm lg:grid-cols-1">
+            {canViewAdmin && (
             <motion.button
               type="button"
               onClick={() => focusPanel("admin")}
@@ -77,7 +158,9 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
                 />
               )}
             </motion.button>
+            )}
 
+            {canViewCentre && (
             <motion.button
               type="button"
               onClick={() => focusPanel("centre")}
@@ -98,6 +181,7 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
                 />
               )}
             </motion.button>
+            )}
           </nav>
 
           {/* System Status Cards */}
@@ -154,7 +238,8 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
           </motion.header>
 
           {/* Panels Grid */}
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className={`grid gap-6 ${canViewAdmin && canViewCentre ? "xl:grid-cols-2" : "xl:grid-cols-1"}`}>
+            {canViewAdmin && (
             <div ref={adminPanelRef}>
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
@@ -164,6 +249,8 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
                 {adminPanel}
               </motion.div>
             </div>
+            )}
+            {canViewCentre && (
             <div ref={centrePanelRef}>
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
@@ -173,6 +260,7 @@ export default function DashboardLayout({ adminPanel, centrePanel }: DashboardLa
                 {centrePanel}
               </motion.div>
             </div>
+            )}
           </div>
         </section>
       </div>
