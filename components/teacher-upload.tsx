@@ -21,6 +21,7 @@ import {
 } from "@/hooks/useEduContract";
 
 type UploadStatus = "idle" | "encrypting" | "uploading" | "awaiting" | "scheduled" | "error";
+const MIN_RELEASE_LEAD_SECONDS = 300;
 
 const statusLabel: Record<Exclude<UploadStatus, "idle">, string> = {
   encrypting: "Encrypting…",
@@ -125,8 +126,9 @@ export default function TeacherUpload() {
     if (!canUpload) return;
 
     const releaseTimestamp = Math.floor(new Date(releaseTime).getTime() / 1000);
-    if (!Number.isFinite(releaseTimestamp) || releaseTimestamp <= Math.floor(Date.now() / 1000)) {
-      toast.error("Release time must be in the future.");
+    const nowTs = Math.floor(Date.now() / 1000);
+    if (!Number.isFinite(releaseTimestamp) || releaseTimestamp <= nowTs + MIN_RELEASE_LEAD_SECONDS) {
+      toast.error("Release time must be at least 5 minutes in the future.");
       return;
     }
 
@@ -232,6 +234,12 @@ export default function TeacherUpload() {
           message = "Transaction rejected in MetaMask. Please approve the transaction to continue.";
         } else if (errorMsg.includes("insufficient funds")) {
           message = "Insufficient funds for transaction. Please ensure you have enough balance.";
+        } else if (
+          errorMsg.includes("invalidreleasetime") ||
+          errorMsg.includes("release time") ||
+          errorMsg.includes("internal json-rpc error")
+        ) {
+          message = "Upload failed because release time is in the past or too close to current time. Please set it 5+ minutes ahead and retry.";
         } else if (errorMsg.includes("network")) {
           message = "Network error. Please check your connection and try again.";
         } else if (errorMsg.includes("ipfs")) {
