@@ -38,10 +38,11 @@ async function main() {
   const examCenterWallets = parseAddresses(
     process.env.EXAM_CENTER_WALLETS || process.env.STUDENT_WALLETS,
   );
+  const studentWallets = parseAddresses(process.env.STUDENT_WALLETS);
 
-  if (adminWallets.length === 0 && examCenterWallets.length === 0) {
+  if (adminWallets.length === 0 && examCenterWallets.length === 0 && studentWallets.length === 0) {
     throw new Error(
-      "Provide ADMIN_WALLETS and/or EXAM_CENTER_WALLETS (or legacy TEACHER_WALLETS/STUDENT_WALLETS).",
+      "Provide ADMIN_WALLETS and/or EXAM_CENTER_WALLETS and/or STUDENT_WALLETS (or legacy TEACHER_WALLETS/STUDENT_WALLETS).",
     );
   }
 
@@ -49,6 +50,7 @@ async function main() {
 
   const ADMIN_ROLE = await contract.ADMIN_ROLE();
   const EXAM_CENTER_ROLE = await contract.EXAM_CENTER_ROLE();
+  const STUDENT_ROLE = await contract.STUDENT_ROLE();
 
   for (const wallet of adminWallets) {
     await grantRoleIfNeeded(contract, ADMIN_ROLE, wallet, "ADMIN");
@@ -56,6 +58,10 @@ async function main() {
 
   for (const wallet of examCenterWallets) {
     await grantRoleIfNeeded(contract, EXAM_CENTER_ROLE, wallet, "EXAM_CENTER");
+  }
+
+  for (const wallet of studentWallets) {
+    await grantRoleIfNeeded(contract, STUDENT_ROLE, wallet, "STUDENT");
   }
 
   console.log("Role bootstrap complete.");
